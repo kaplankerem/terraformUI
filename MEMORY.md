@@ -180,6 +180,7 @@ When working on this project, consider:
 3. **Schema-driven forms** - UI is generated from resource schemas
 4. **Terraform best practices** - Generated code should follow HashiCorp guidelines
 5. **Azure Portal similarity** - UI should feel familiar to Azure users
+6. **Always update documentation** - After completing a todo list or phase, ALWAYS update `MEMORY.md` and `README.md` with the current state
 
 ### Common Tasks
 
