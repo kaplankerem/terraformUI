@@ -27,7 +27,7 @@ IaNC (Infrastructure as No-Code) simplifies the process of creating Infrastructu
 
 ## Project Status
 
-✅ **Phase 4 Complete** - Polish and Advanced Features Implemented
+✅ **Phase 5 Complete** - Template Loading & Visual Designer Integration
 
 See the [plans directory](./plans) for detailed documentation.
 
@@ -84,6 +84,7 @@ terraformUI/
 | Phase 2 | Core Features - Forms, generation, preview | ✅ Complete |
 | Phase 3 | Enhanced UX - Visual designer, templates | ✅ Complete |
 | Phase 4 | Polish - Testing, documentation, advanced features | ✅ Complete |
+| Phase 5 | Template Loading & Visual Designer Integration | ✅ Complete |
 
 ## Supported Azure Resources (MVP)
 

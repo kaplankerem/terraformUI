@@ -6,7 +6,7 @@
 
 **Description:** A GUI-driven application for generating Terraform code for Azure cloud infrastructure. Users can design and deploy Azure resources through an intuitive interface without writing code.
 
-**Status:** Phase 4 Complete - Polish and Advanced Features Implemented
+**Status:** Phase 5 Complete - Template Loading & Visual Designer Integration
 
 ---
 
@@ -94,10 +94,18 @@ terraformUI/
 - Error boundary component for frontend
 - Bug fixes for template instantiation and terraform generation
 
+### Phase 5: Template Loading & Visual Designer Integration ✅ COMPLETE
+- Fixed template loading to redirect to visual designer
+- VisualDesigner now loads project resources as nodes on canvas
+- Added automatic edge generation between related resources
+- Added PUT endpoint for updating project resources
+- Created Settings page with Azure, Terraform, and UI preferences
+
 ### Future Enhancements
 - E2E testing with Playwright
 - Terraform validate integration
 - Azure authentication and resource import
+- Nested resources support (parent-child relationships)
 - Cost estimation integration
 
 ---

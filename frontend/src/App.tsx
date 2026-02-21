@@ -7,6 +7,7 @@ import ResourceDesigner from './pages/ResourceDesigner';
 import VisualDesigner from './pages/VisualDesigner';
 import Projects from './pages/Projects';
 import Templates from './pages/Templates';
+import Settings from './pages/Settings';
 
 const { Content } = Layout;
 
@@ -23,8 +24,9 @@ function App() {
               <Route path="/designer" element={<ResourceDesigner />} />
               <Route path="/visual-designer" element={<VisualDesigner />} />
               <Route path="/projects" element={<Projects />} />
-              <Route path="/projects/:id" element={<ResourceDesigner />} />
+              <Route path="/projects/:id" element={<VisualDesigner />} />
               <Route path="/templates" element={<Templates />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </Content>
         </Layout>

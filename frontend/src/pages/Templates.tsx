@@ -100,6 +100,7 @@ const Templates = () => {
           }
           
           message.success('Project created from template');
+          // Redirect to visual designer with the project
           window.location.href = `/projects/${projectId}`;
         }
       } else {
@@ -109,6 +110,7 @@ const Templates = () => {
         });
         if (response.data.success) {
           message.success('Project created from template');
+          // Redirect to visual designer with the project
           window.location.href = `/projects/${response.data.data.id}`;
         }
       }

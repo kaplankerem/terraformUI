@@ -311,6 +311,44 @@ projectRoutes.delete('/:id/resources/:resourceId', async (req: Request, res: Res
   }
 });
 
+// Update resource in project
+projectRoutes.put('/:id/resources/:resourceId', async (req: Request, res: Response) => {
+  try {
+    const { resourceId } = req.params;
+    const { name, configuration, dependencies } = req.body;
+
+    const updateData: Record<string, unknown> = {};
+    if (name !== undefined) updateData.name = name;
+    if (configuration !== undefined) updateData.configuration = JSON.stringify(configuration);
+    if (dependencies !== undefined) updateData.dependencies = JSON.stringify(dependencies);
+
+    const resource = await prisma.resource.update({
+      where: { id: resourceId },
+      data: updateData
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        id: resource.id,
+        type: resource.type,
+        name: resource.name,
+        configuration: JSON.parse(resource.configuration),
+        dependencies: resource.dependencies ? JSON.parse(resource.dependencies) : [],
+        orderIndex: resource.orderIndex
+      }
+    };
+
+    res.json(response);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message }
+    });
+  }
+});
+
 // Generate Terraform for project
 projectRoutes.post('/:id/generate', async (req: Request, res: Response) => {
   try {
