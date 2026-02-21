@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Layout, Drawer, Button, Space, message, Typography, Divider, Spin, Breadcrumb } from 'antd';
-import { SaveOutlined, CodeOutlined, HomeOutlined, FolderOutlined } from '@ant-design/icons';
+import { SaveOutlined, CodeOutlined, HomeOutlined, FolderOutlined, ShareAltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { Node, Edge } from '@xyflow/react';
-import { DesignerCanvas, ResourcePalette } from '../components/canvas';
+import { DesignerCanvas, ResourcePalette, isContainerType, CONTAINER_SIZES } from '../components/canvas';
 import DynamicForm from '../components/forms/DynamicForm';
+import { generateMermaid } from '../utils/mermaid-export';
 import type { AzureResourceSchema, PropertyDefinition } from '@ianc/shared';
 
 const { Sider, Content } = Layout;
@@ -24,6 +25,7 @@ interface ProjectResource {
   type: string;
   name: string;
   configuration: Record<string, unknown>;
+  dependencies?: Record<string, unknown> | null;
 }
 
 interface Project {
@@ -49,17 +51,6 @@ const resourceTypeConfig: Record<string, { color: string; icon: string; category
   'azurerm_mssql_database': { color: '#ffb900', icon: 'sql-database', category: 'database' },
   'azurerm_application_insights': { color: '#68217a', icon: 'app-insights', category: 'monitoring' },
   'azurerm_log_analytics_workspace': { color: '#68217a', icon: 'log-analytics', category: 'monitoring' },
-};
-
-// Default positions for resource nodes
-const getDefaultNodePosition = (index: number, total: number): { x: number; y: number } => {
-  const cols = Math.min(total, 4);
-  const row = Math.floor(index / cols);
-  const col = index % cols;
-  return {
-    x: 100 + col * 280,
-    y: 100 + row * 200,
-  };
 };
 
 const VisualDesigner = () => {
@@ -106,27 +97,36 @@ const VisualDesigner = () => {
 
   const fetchProjectResources = async () => {
     if (!projectId) return;
-    
+
     setProjectLoading(true);
     try {
       const response = await axios.get(`/api/v1/projects/${projectId}`);
       if (response.data.success) {
         const projectData = response.data.data;
         setProject(projectData);
-        
-        // Convert project resources to nodes
+
         if (projectData.resources && projectData.resources.length > 0) {
-          console.log('VisualDesigner: Converting resources to nodes', projectData.resources);
+          // Build parent-child relationships from dependencies
+          const parentMap = new Map<string, string>(); // childId -> parentId
+          projectData.resources.forEach((resource: ProjectResource) => {
+            if (resource.dependencies && typeof resource.dependencies === 'object') {
+              const deps = resource.dependencies as Record<string, unknown>;
+              if (deps.parentResourceId) {
+                parentMap.set(resource.id, deps.parentResourceId as string);
+              }
+            }
+          });
+
+          // Convert resources to nodes
           const projectNodes: Node[] = projectData.resources.map((resource: ProjectResource, index: number) => {
             const config = resourceTypeConfig[resource.type] || { color: '#666', icon: 'default', category: 'core' };
-            const position = getDefaultNodePosition(index, projectData.resources.length);
-            
-            console.log('Creating node for resource:', resource.type, resource.name, 'position:', position);
-            
-            return {
+            const isGroup = isContainerType(resource.type);
+            const parentId = parentMap.get(resource.id);
+
+            const node: Node = {
               id: resource.id,
-              type: 'resource',
-              position,
+              type: isGroup ? 'group' : 'resource',
+              position: { x: 100 + (index % 4) * 280, y: 100 + Math.floor(index / 4) * 200 },
               data: {
                 type: resource.type,
                 label: resource.name,
@@ -136,11 +136,41 @@ const VisualDesigner = () => {
                 category: config.category,
               },
             };
+
+            // Set dimensions for group nodes
+            if (isGroup) {
+              const size = CONTAINER_SIZES[resource.type] || { width: 400, height: 300 };
+              node.style = { width: size.width, height: size.height };
+            }
+
+            // Set parent-child relationship
+            if (parentId) {
+              node.parentId = parentId;
+              node.extent = 'parent';
+              node.expandParent = true;
+              // Position inside parent
+              node.position = { x: 30 + (index % 3) * 220, y: 60 + Math.floor(index / 3) * 180 };
+            }
+
+            return node;
           });
-          
-          console.log('VisualDesigner: Setting nodes', projectNodes.length);
+
+          // Sort: parents must come before children (React Flow requirement)
+          projectNodes.sort((a, b) => {
+            if (a.parentId && !b.parentId) return 1;
+            if (!a.parentId && b.parentId) return -1;
+            // If both have parents, sort by depth
+            if (a.parentId && b.parentId) {
+              const aIsParentOfB = b.parentId === a.id;
+              const bIsParentOfA = a.parentId === b.id;
+              if (aIsParentOfB) return -1;
+              if (bIsParentOfA) return 1;
+            }
+            return 0;
+          });
+
           setNodes(projectNodes);
-          
+
           // Generate edges based on resource relationships
           generateEdges(projectData.resources);
         }
@@ -156,7 +186,7 @@ const VisualDesigner = () => {
     const newEdges: Edge[] = [];
     const addedEdgeIds = new Set<string>();
 
-    const addEdge = (sourceId: string, targetId: string, color: string) => {
+    const addEdgeFn = (sourceId: string, targetId: string, color: string) => {
       const edgeId = `${sourceId}-${targetId}`;
       if (!addedEdgeIds.has(edgeId)) {
         addedEdgeIds.add(edgeId);
@@ -170,60 +200,83 @@ const VisualDesigner = () => {
       }
     };
 
-    // Find relationships between resources
+    // Build resource lookup for reference resolution
+    const resourcesByType = new Map<string, ProjectResource[]>();
+    projectResources.forEach(r => {
+      const list = resourcesByType.get(r.type) || [];
+      list.push(r);
+      resourcesByType.set(r.type, list);
+    });
+
+    // Detect relationships from configuration values that contain ${...} references
     projectResources.forEach((resource) => {
       const config = resource.configuration;
 
       // Check for resource_group_name reference
       if (config.resource_group_name) {
-        const rgResource = projectResources.find(
-          r => r.type === 'azurerm_resource_group' &&
-               (r.name === config.resource_group_name || r.configuration.name === config.resource_group_name)
+        const rgs = resourcesByType.get('azurerm_resource_group') || [];
+        const rgResource = rgs.find(
+          r => r.name === config.resource_group_name ||
+               r.configuration.name === config.resource_group_name ||
+               (typeof config.resource_group_name === 'string' &&
+                config.resource_group_name.includes(r.id))
         );
         if (rgResource) {
-          addEdge(rgResource.id, resource.id, '#0078d4');
+          addEdgeFn(rgResource.id, resource.id, '#0078d4');
         }
       }
 
       // Check for virtual_network_name reference
       if (config.virtual_network_name) {
-        const vnetResource = projectResources.find(
-          r => r.type === 'azurerm_virtual_network' &&
-               (r.name === config.virtual_network_name || r.configuration.name === config.virtual_network_name)
+        const vnets = resourcesByType.get('azurerm_virtual_network') || [];
+        const vnetResource = vnets.find(
+          r => r.name === config.virtual_network_name ||
+               r.configuration.name === config.virtual_network_name ||
+               (typeof config.virtual_network_name === 'string' &&
+                config.virtual_network_name.includes(r.id))
         );
         if (vnetResource) {
-          addEdge(vnetResource.id, resource.id, '#00bcf2');
+          addEdgeFn(vnetResource.id, resource.id, '#00bcf2');
         }
       }
 
       // Check for subnet_id reference
       if (config.subnet_id) {
-        const subnetResource = projectResources.find(
-          r => r.type === 'azurerm_subnet' &&
-               (r.id === config.subnet_id || r.configuration.name === config.subnet_id)
+        const subnets = resourcesByType.get('azurerm_subnet') || [];
+        const subnetResource = subnets.find(
+          r => r.id === config.subnet_id ||
+               r.configuration.name === config.subnet_id ||
+               (typeof config.subnet_id === 'string' &&
+                config.subnet_id.includes(r.id))
         );
         if (subnetResource) {
-          addEdge(subnetResource.id, resource.id, '#00bcf2');
+          addEdgeFn(subnetResource.id, resource.id, '#00bcf2');
         }
       }
 
       // Check for service_plan_id reference (Web App -> Service Plan)
       if (config.service_plan_id && typeof config.service_plan_id === 'string') {
-        const planResource = projectResources.find(
-          r => r.type === 'azurerm_service_plan'
-        );
+        const plans = resourcesByType.get('azurerm_service_plan') || [];
+        const planResource = plans.find(
+          r => config.service_plan_id === r.id ||
+               (typeof config.service_plan_id === 'string' &&
+                (config.service_plan_id as string).includes(r.id))
+        ) || plans[0];
         if (planResource) {
-          addEdge(planResource.id, resource.id, '#f25022');
+          addEdgeFn(planResource.id, resource.id, '#f25022');
         }
       }
 
       // Check for server_id reference (SQL Database -> SQL Server)
       if (config.server_id && typeof config.server_id === 'string') {
-        const serverResource = projectResources.find(
-          r => r.type === 'azurerm_mssql_server'
-        );
+        const servers = resourcesByType.get('azurerm_mssql_server') || [];
+        const serverResource = servers.find(
+          r => config.server_id === r.id ||
+               (typeof config.server_id === 'string' &&
+                (config.server_id as string).includes(r.id))
+        ) || servers[0];
         if (serverResource) {
-          addEdge(serverResource.id, resource.id, '#ffb900');
+          addEdgeFn(serverResource.id, resource.id, '#ffb900');
         }
       }
     });
@@ -242,7 +295,7 @@ const VisualDesigner = () => {
         if (response.data.success) {
           const schema = response.data.data as AzureResourceSchema;
           setSelectedResourceSchema(schema);
-          
+
           // Set initial form values from node configuration or defaults
           const config = (node.data.configuration as Record<string, unknown>) || {};
           const defaults: Record<string, unknown> = {};
@@ -279,16 +332,22 @@ const VisualDesigner = () => {
     setFormValues(values);
   }, []);
 
-  // Handle form submission
+  // Handle form submission - saves config and parent-child relationship
   const handleFormSubmit = useCallback(async () => {
     if (selectedNode && selectedResourceSchema && projectId) {
       try {
-        // Update the resource in the backend
+        // Build dependencies object with parentResourceId
+        const dependencies: Record<string, unknown> = {};
+        if (selectedNode.parentId) {
+          dependencies.parentResourceId = selectedNode.parentId;
+        }
+
         await axios.put(`/api/v1/projects/${projectId}/resources/${selectedNode.id}`, {
           configuration: formValues,
           name: (formValues.name as string) || selectedNode.data.label,
+          dependencies,
         });
-        
+
         // Update the node's configuration locally
         const updatedNodes = nodes.map((node) => {
           if (node.id === selectedNode.id) {
@@ -339,7 +398,20 @@ const VisualDesigner = () => {
 
     setLoading(true);
     try {
+      // Before generating, persist all parent-child relationships
       if (projectId) {
+        for (const node of nodes) {
+          if (node.parentId) {
+            try {
+              await axios.put(`/api/v1/projects/${projectId}/resources/${node.id}`, {
+                dependencies: { parentResourceId: node.parentId },
+              });
+            } catch {
+              // Continue even if individual save fails
+            }
+          }
+        }
+
         // Use project-specific generation endpoint
         const response = await axios.post(`/api/v1/projects/${projectId}/generate`);
         if (response.data.success) {
@@ -369,8 +441,7 @@ const VisualDesigner = () => {
         });
 
         const results = await Promise.all(codePromises);
-        
-        // Combine all main.tf and outputs.tf
+
         const mainTfParts = results.map((r: { data: { files: Record<string, string> } }) => r.data.files['main.tf']);
         const outputsTfParts = results.map((r: { data: { files: Record<string, string> } }) => r.data.files['outputs.tf']);
 
@@ -387,6 +458,17 @@ const VisualDesigner = () => {
       setLoading(false);
     }
   }, [nodes, projectId]);
+
+  // Export as Mermaid diagram
+  const handleExportMermaid = useCallback(() => {
+    if (nodes.length === 0) {
+      message.warning('Add resources to the canvas first');
+      return;
+    }
+    const mermaid = generateMermaid(nodes, edges);
+    navigator.clipboard.writeText(mermaid);
+    message.success('Mermaid diagram copied to clipboard');
+  }, [nodes, edges]);
 
   // Save design
   const handleSave = useCallback(() => {
@@ -416,15 +498,15 @@ const VisualDesigner = () => {
           />
         </Spin>
       </Sider>
-      
+
       <Content style={{ position: 'relative' }}>
         {/* Header with breadcrumb */}
         {project && (
-          <div style={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
             padding: '8px 16px',
             background: '#fff',
             borderBottom: '1px solid #f0f0f0',
@@ -439,7 +521,7 @@ const VisualDesigner = () => {
             />
           </div>
         )}
-        
+
         <div style={{ position: 'absolute', top: project ? 48 : 16, left: 16, zIndex: 10 }}>
           <Space>
             <Button icon={<SaveOutlined />} onClick={handleSave}>
@@ -453,9 +535,15 @@ const VisualDesigner = () => {
             >
               Generate Terraform
             </Button>
+            <Button
+              icon={<ShareAltOutlined />}
+              onClick={handleExportMermaid}
+            >
+              Export Mermaid
+            </Button>
           </Space>
         </div>
-        
+
         <div style={{ position: 'absolute', top: project ? 48 : 0, left: 0, right: 0, bottom: 0 }}>
           {projectLoading && (
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10 }}>
@@ -534,7 +622,7 @@ const VisualDesigner = () => {
             >
               {generatedCode.mainTf}
             </pre>
-            
+
             {generatedCode.variablesTf && (
               <>
                 <Divider />
@@ -553,7 +641,7 @@ const VisualDesigner = () => {
                 </pre>
               </>
             )}
-            
+
             {generatedCode.outputsTf && (
               <>
                 <Divider />
@@ -572,9 +660,9 @@ const VisualDesigner = () => {
                 </pre>
               </>
             )}
-            
+
             <Divider />
-            
+
             <Space>
               <Button
                 type="primary"
