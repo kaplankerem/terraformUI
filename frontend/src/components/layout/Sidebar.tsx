@@ -5,6 +5,8 @@ import {
   AppstoreOutlined,
   FolderOutlined,
   SettingOutlined,
+  ApartmentOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -25,9 +27,19 @@ function AppSidebar() {
       label: 'Resource Designer',
     },
     {
+      key: '/visual-designer',
+      icon: <ApartmentOutlined />,
+      label: 'Visual Designer',
+    },
+    {
       key: '/projects',
       icon: <FolderOutlined />,
       label: 'Projects',
+    },
+    {
+      key: '/templates',
+      icon: <CopyOutlined />,
+      label: 'Templates',
     },
     {
       key: '/settings',
