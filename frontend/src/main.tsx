@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ConfigProvider } from 'antd';
 import App from './App';
+import { ErrorBoundary } from './components/common';
 import './index.css';
 
 const theme = {
@@ -13,8 +14,10 @@ const theme = {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ConfigProvider theme={theme}>
-      <App />
-    </ConfigProvider>
+    <ErrorBoundary>
+      <ConfigProvider theme={theme}>
+        <App />
+      </ConfigProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
