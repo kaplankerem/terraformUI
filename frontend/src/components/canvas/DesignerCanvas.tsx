@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -40,6 +40,91 @@ interface DesignerCanvasProps {
   onNodeSelect?: (node: Node | null) => void;
 }
 
+// Default configurations for each resource type
+const defaultConfigs: Record<string, (count: number) => Record<string, unknown>> = {
+  'azurerm_resource_group': (c) => ({
+    name: `rg-${c}`,
+    location: 'eastus',
+  }),
+  'azurerm_virtual_network': (c) => ({
+    name: `vnet-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    address_space: ['10.0.0.0/16'],
+  }),
+  'azurerm_subnet': (c) => ({
+    name: `snet-${c}`,
+    resource_group_name: '<resource_group_name>',
+    virtual_network_name: '<virtual_network_name>',
+    address_prefixes: ['10.0.1.0/24'],
+  }),
+  'azurerm_storage_account': (c) => ({
+    name: `st${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    account_tier: 'Standard',
+    account_replication_type: 'LRS',
+  }),
+  'azurerm_network_security_group': (c) => ({
+    name: `nsg-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+  }),
+  'azurerm_public_ip': (c) => ({
+    name: `pip-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    allocation_method: 'Static',
+    sku: 'Standard',
+  }),
+  'azurerm_network_interface': (c) => ({
+    name: `nic-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    ip_configuration_name: 'ipconfig',
+    subnet_id: '<subnet_id>',
+  }),
+  'azurerm_service_plan': (c) => ({
+    name: `asp-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    os_type: 'Linux',
+    sku_name: 'B1',
+  }),
+  'azurerm_linux_web_app': (c) => ({
+    name: `webapp-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    service_plan_id: '<service_plan_id>',
+  }),
+  'azurerm_mssql_server': (c) => ({
+    name: `sqlserver-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    version: '12.0',
+    administrator_login: 'sqladmin',
+    administrator_login_password: '<password>',
+  }),
+  'azurerm_mssql_database': (c) => ({
+    name: `sqldb-${c}`,
+    server_id: '<mssql_server_id>',
+    sku_name: 'S0',
+  }),
+  'azurerm_application_insights': (c) => ({
+    name: `appi-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    application_type: 'web',
+  }),
+  'azurerm_log_analytics_workspace': (c) => ({
+    name: `log-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    sku: 'PerGB2018',
+    retention_in_days: 30,
+  }),
+};
+
 const DesignerCanvasInner = ({
   initialNodes = [],
   initialEdges = [],
@@ -51,25 +136,27 @@ const DesignerCanvasInner = ({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  
-  // Track previous props to detect changes
+
+  // Track previous props to detect external changes
   const prevInitialNodesRef = useRef<string>('');
   const prevInitialEdgesRef = useRef<string>('');
+  // Track whether changes are internal (from user interaction)
+  const isInternalChange = useRef(false);
 
-  // Sync external initialNodes/initialEdges changes
+  // Sync external initialNodes changes
   useEffect(() => {
     const newNodeIds = (initialNodes || []).map(n => n.id).sort().join(',');
-    if (newNodeIds && newNodeIds !== prevInitialNodesRef.current) {
-      console.log('DesignerCanvas: Setting nodes', initialNodes?.length);
+    if (newNodeIds && newNodeIds !== prevInitialNodesRef.current && !isInternalChange.current) {
       prevInitialNodesRef.current = newNodeIds;
       setNodes(initialNodes || []);
     }
+    isInternalChange.current = false;
   }, [initialNodes]);
 
+  // Sync external initialEdges changes
   useEffect(() => {
     const newEdgeIds = (initialEdges || []).map(e => e.id).sort().join(',');
-    if (newEdgeIds && newEdgeIds !== prevInitialEdgesRef.current) {
-      console.log('DesignerCanvas: Setting edges', initialEdges?.length);
+    if (newEdgeIds && newEdgeIds !== prevInitialEdgesRef.current && !isInternalChange.current) {
       prevInitialEdgesRef.current = newEdgeIds;
       setEdges(initialEdges || []);
     }
@@ -80,18 +167,21 @@ const DesignerCanvasInner = ({
     if (reactFlowInstance && nodes.length > 0) {
       setTimeout(() => {
         reactFlowInstance.fitView({ padding: 0.2 });
-      }, 50);
+      }, 100);
     }
   }, [reactFlowInstance, nodes.length]);
 
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge(params, eds));
-      if (onEdgesChange) {
-        onEdgesChange(addEdge(params, edges));
-      }
+      setEdges((eds) => {
+        const newEdges = addEdge(params, eds);
+        if (onEdgesChange) {
+          onEdgesChange(newEdges);
+        }
+        return newEdges;
+      });
     },
-    [edges, onEdgesChange, setEdges]
+    [onEdgesChange]
   );
 
   const onNodeClick = useCallback(
@@ -111,24 +201,29 @@ const DesignerCanvasInner = ({
 
   const onNodesChangeHandler = useCallback(
     (changes: NodeChange[]) => {
-      const newNodes = applyNodeChanges(changes, nodes);
-      setNodes(newNodes);
-      if (onNodesChange) {
-        onNodesChange(newNodes);
-      }
+      setNodes((currentNodes) => {
+        const newNodes = applyNodeChanges(changes, currentNodes);
+        if (onNodesChange) {
+          isInternalChange.current = true;
+          onNodesChange(newNodes);
+        }
+        return newNodes;
+      });
     },
-    [nodes, onNodesChange]
+    [onNodesChange]
   );
 
   const onEdgesChangeHandler = useCallback(
     (changes: EdgeChange[]) => {
-      const newEdges = applyEdgeChanges(changes, edges);
-      setEdges(newEdges);
-      if (onEdgesChange) {
-        onEdgesChange(newEdges);
-      }
+      setEdges((currentEdges) => {
+        const newEdges = applyEdgeChanges(changes, currentEdges);
+        if (onEdgesChange) {
+          onEdgesChange(newEdges);
+        }
+        return newEdges;
+      });
     },
-    [edges, onEdgesChange]
+    [onEdgesChange]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -155,77 +250,41 @@ const DesignerCanvasInner = ({
         y: event.clientY,
       });
 
-      // Generate a unique name for the resource
-      const resourceCount = nodes.length + 1;
-      const resourceName = `${type.replace('azurerm_', '').replace(/_/g, '-')}-${resourceCount}`;
+      // Use functional update to avoid stale closure issues
+      setNodes((currentNodes) => {
+        const resourceCount = currentNodes.length + 1;
+        const resourceName = `${type.replace('azurerm_', '').replace(/_/g, '-')}-${resourceCount}`;
 
-      // Default configurations for each resource type
-      const defaultConfigs: Record<string, Record<string, unknown>> = {
-        'azurerm_resource_group': {
-          name: `rg-${resourceCount}`,
-          location: 'eastus',
-        },
-        'azurerm_virtual_network': {
-          name: `vnet-${resourceCount}`,
-          resource_group_name: '<resource_group_name>',
-          location: 'eastus',
-          address_space: ['10.0.0.0/16'],
-        },
-        'azurerm_subnet': {
-          name: `snet-${resourceCount}`,
-          resource_group_name: '<resource_group_name>',
-          virtual_network_name: '<virtual_network_name>',
-          address_prefixes: ['10.0.1.0/24'],
-        },
-        'azurerm_storage_account': {
-          name: `st${resourceCount}`,
-          resource_group_name: '<resource_group_name>',
-          location: 'eastus',
-          account_tier: 'Standard',
-          account_replication_type: 'LRS',
-        },
-        'azurerm_network_security_group': {
-          name: `nsg-${resourceCount}`,
-          resource_group_name: '<resource_group_name>',
-          location: 'eastus',
-        },
-        'azurerm_public_ip': {
-          name: `pip-${resourceCount}`,
-          resource_group_name: '<resource_group_name>',
-          location: 'eastus',
-          allocation_method: 'Static',
-          sku: 'Standard',
-        },
-        'azurerm_network_interface': {
-          name: `nic-${resourceCount}`,
-          resource_group_name: '<resource_group_name>',
-          location: 'eastus',
-          ip_configuration_name: 'ipconfig',
-          subnet_id: '<subnet_id>',
-        },
-      };
+        const configFn = defaultConfigs[type];
+        const configuration = configFn ? configFn(resourceCount) : { name: resourceName };
 
-      const newNode: Node = {
-        id: `${type}-${Date.now()}`,
-        type: 'resource',
-        position,
-        data: {
-          label: label || type,
-          type,
-          category,
-          icon,
-          configuration: defaultConfigs[type] || { name: resourceName },
-        },
-      };
+        const newNode: Node = {
+          id: `${type}-${Date.now()}`,
+          type: 'resource',
+          position,
+          data: {
+            label: label || type,
+            type,
+            category,
+            icon,
+            configuration,
+          },
+        };
 
-      setNodes((nds) => nds.concat(newNode));
-      if (onNodesChange) {
-        onNodesChange([...nodes, newNode]);
-      }
-      
-      message.success(`Added ${label} to canvas`);
+        const updatedNodes = [...currentNodes, newNode];
+
+        if (onNodesChange) {
+          isInternalChange.current = true;
+          prevInitialNodesRef.current = updatedNodes.map(n => n.id).sort().join(',');
+          onNodesChange(updatedNodes);
+        }
+
+        return updatedNodes;
+      });
+
+      message.success(`Added ${label || type} to canvas`);
     },
-    [reactFlowInstance, nodes, onNodesChange, setNodes]
+    [reactFlowInstance, onNodesChange]
   );
 
   const handleZoomIn = useCallback(() => {
@@ -241,18 +300,32 @@ const DesignerCanvasInner = ({
   }, [reactFlowInstance]);
 
   const handleDeleteSelected = useCallback(() => {
-    const selectedNodes = nodes.filter((node) => node.selected);
-    const selectedEdges = edges.filter((edge) => edge.selected);
-    
-    if (selectedNodes.length === 0 && selectedEdges.length === 0) {
-      message.info('No elements selected');
-      return;
-    }
+    setNodes((currentNodes) => {
+      setEdges((currentEdges) => {
+        const selectedNodes = currentNodes.filter((node) => node.selected);
+        const selectedEdges = currentEdges.filter((edge) => edge.selected);
 
-    setNodes((nds) => nds.filter((node) => !node.selected));
-    setEdges((eds) => eds.filter((edge) => !edge.selected));
-    message.success(`Deleted ${selectedNodes.length} node(s) and ${selectedEdges.length} edge(s)`);
-  }, [nodes, edges, setNodes, setEdges]);
+        if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+          message.info('No elements selected');
+          return currentEdges;
+        }
+
+        const newEdges = currentEdges.filter((edge) => !edge.selected);
+        if (onEdgesChange) {
+          onEdgesChange(newEdges);
+        }
+        message.success(`Deleted ${selectedNodes.length} node(s) and ${selectedEdges.length} edge(s)`);
+        return newEdges;
+      });
+
+      const newNodes = currentNodes.filter((node) => !node.selected);
+      if (onNodesChange) {
+        isInternalChange.current = true;
+        onNodesChange(newNodes);
+      }
+      return newNodes;
+    });
+  }, [onNodesChange, onEdgesChange]);
 
   const handleExport = useCallback(() => {
     if (!reactFlowInstance) return;
@@ -261,13 +334,13 @@ const DesignerCanvasInner = ({
     const json = JSON.stringify(flow, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = 'infrastructure-design.json';
     link.click();
     URL.revokeObjectURL(url);
-    
+
     message.success('Design exported successfully');
   }, [reactFlowInstance]);
 
@@ -305,12 +378,14 @@ const DesignerCanvasInner = ({
               storage: '#0078d4',
               compute: '#f25022',
               database: '#ffb900',
+              monitoring: '#68217a',
+              security: '#e81123',
             };
             return categoryColors[data?.category || ''] || '#666';
           }}
           style={{ background: '#f5f5f5' }}
         />
-        
+
         <Panel position="top-right">
           <Space>
             <Tooltip title="Zoom In">

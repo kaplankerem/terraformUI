@@ -2,11 +2,16 @@ import { Card, Input, List, Typography, Space, Tag, Empty } from 'antd';
 import {
   AppstoreOutlined,
   CloudOutlined,
+  CloudServerOutlined,
   DatabaseOutlined,
   GlobalOutlined,
   SafetyOutlined,
   WifiOutlined,
   SearchOutlined,
+  CodeOutlined,
+  FundOutlined,
+  BarChartOutlined,
+  ConsoleSqlOutlined,
 } from '@ant-design/icons';
 import { useState, useMemo } from 'react';
 
@@ -34,6 +39,12 @@ const iconMap: Record<string, React.ReactNode> = {
   nsg: <SafetyOutlined />,
   'public-ip': <CloudOutlined />,
   nic: <WifiOutlined />,
+  'service-plan': <CodeOutlined />,
+  'web-app': <CloudServerOutlined />,
+  'sql-server': <ConsoleSqlOutlined />,
+  'sql-database': <DatabaseOutlined />,
+  'app-insights': <FundOutlined />,
+  'log-analytics': <BarChartOutlined />,
 };
 
 // Category color mapping
@@ -43,6 +54,8 @@ const categoryColors: Record<string, string> = {
   storage: '#0078d4',
   compute: '#f25022',
   database: '#ffb900',
+  monitoring: '#68217a',
+  security: '#e81123',
 };
 
 const ResourcePalette = ({ resources, onResourceSelect }: ResourcePaletteProps) => {

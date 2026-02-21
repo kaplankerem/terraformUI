@@ -6,6 +6,12 @@ import { storageAccountSchema } from './schemas/storage-account';
 import { networkSecurityGroupSchema } from './schemas/network-security-group';
 import { publicIpSchema } from './schemas/public-ip';
 import { networkInterfaceSchema } from './schemas/network-interface';
+import { servicePlanSchema } from './schemas/service-plan';
+import { linuxWebAppSchema } from './schemas/linux-web-app';
+import { mssqlServerSchema } from './schemas/mssql-server';
+import { mssqlDatabaseSchema } from './schemas/mssql-database';
+import { applicationInsightsSchema } from './schemas/application-insights';
+import { logAnalyticsWorkspaceSchema } from './schemas/log-analytics-workspace';
 
 class SchemaRegistry {
   private schemas: Map<string, AzureResourceSchema> = new Map();
@@ -19,6 +25,12 @@ class SchemaRegistry {
     this.register(networkSecurityGroupSchema);
     this.register(publicIpSchema);
     this.register(networkInterfaceSchema);
+    this.register(servicePlanSchema);
+    this.register(linuxWebAppSchema);
+    this.register(mssqlServerSchema);
+    this.register(mssqlDatabaseSchema);
+    this.register(applicationInsightsSchema);
+    this.register(logAnalyticsWorkspaceSchema);
   }
 
   register(schema: AzureResourceSchema): void {

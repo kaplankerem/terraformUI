@@ -43,6 +43,12 @@ const resourceTypeConfig: Record<string, { color: string; icon: string; category
   'azurerm_network_security_group': { color: '#e81123', icon: 'nsg', category: 'networking' },
   'azurerm_public_ip': { color: '#00bcf2', icon: 'public-ip', category: 'networking' },
   'azurerm_network_interface': { color: '#00bcf2', icon: 'nic', category: 'networking' },
+  'azurerm_service_plan': { color: '#f25022', icon: 'service-plan', category: 'compute' },
+  'azurerm_linux_web_app': { color: '#f25022', icon: 'web-app', category: 'compute' },
+  'azurerm_mssql_server': { color: '#ffb900', icon: 'sql-server', category: 'database' },
+  'azurerm_mssql_database': { color: '#ffb900', icon: 'sql-database', category: 'database' },
+  'azurerm_application_insights': { color: '#68217a', icon: 'app-insights', category: 'monitoring' },
+  'azurerm_log_analytics_workspace': { color: '#68217a', icon: 'log-analytics', category: 'monitoring' },
 };
 
 // Default positions for resource nodes
@@ -148,62 +154,80 @@ const VisualDesigner = () => {
 
   const generateEdges = (projectResources: ProjectResource[]) => {
     const newEdges: Edge[] = [];
-    
+    const addedEdgeIds = new Set<string>();
+
+    const addEdge = (sourceId: string, targetId: string, color: string) => {
+      const edgeId = `${sourceId}-${targetId}`;
+      if (!addedEdgeIds.has(edgeId)) {
+        addedEdgeIds.add(edgeId);
+        newEdges.push({
+          id: edgeId,
+          source: sourceId,
+          target: targetId,
+          animated: true,
+          style: { stroke: color },
+        });
+      }
+    };
+
     // Find relationships between resources
     projectResources.forEach((resource) => {
       const config = resource.configuration;
-      
+
       // Check for resource_group_name reference
       if (config.resource_group_name) {
         const rgResource = projectResources.find(
-          r => r.type === 'azurerm_resource_group' && 
+          r => r.type === 'azurerm_resource_group' &&
                (r.name === config.resource_group_name || r.configuration.name === config.resource_group_name)
         );
         if (rgResource) {
-          newEdges.push({
-            id: `${rgResource.id}-${resource.id}`,
-            source: rgResource.id,
-            target: resource.id,
-            animated: true,
-            style: { stroke: '#0078d4' },
-          });
+          addEdge(rgResource.id, resource.id, '#0078d4');
         }
       }
-      
+
       // Check for virtual_network_name reference
       if (config.virtual_network_name) {
         const vnetResource = projectResources.find(
-          r => r.type === 'azurerm_virtual_network' && 
+          r => r.type === 'azurerm_virtual_network' &&
                (r.name === config.virtual_network_name || r.configuration.name === config.virtual_network_name)
         );
         if (vnetResource) {
-          newEdges.push({
-            id: `${vnetResource.id}-${resource.id}`,
-            source: vnetResource.id,
-            target: resource.id,
-            animated: true,
-            style: { stroke: '#00bcf2' },
-          });
+          addEdge(vnetResource.id, resource.id, '#00bcf2');
         }
       }
-      
+
       // Check for subnet_id reference
       if (config.subnet_id) {
         const subnetResource = projectResources.find(
-          r => r.type === 'azurerm_subnet' && r.id === config.subnet_id
+          r => r.type === 'azurerm_subnet' &&
+               (r.id === config.subnet_id || r.configuration.name === config.subnet_id)
         );
         if (subnetResource) {
-          newEdges.push({
-            id: `${subnetResource.id}-${resource.id}`,
-            source: subnetResource.id,
-            target: resource.id,
-            animated: true,
-            style: { stroke: '#00bcf2' },
-          });
+          addEdge(subnetResource.id, resource.id, '#00bcf2');
+        }
+      }
+
+      // Check for service_plan_id reference (Web App -> Service Plan)
+      if (config.service_plan_id && typeof config.service_plan_id === 'string') {
+        const planResource = projectResources.find(
+          r => r.type === 'azurerm_service_plan'
+        );
+        if (planResource) {
+          addEdge(planResource.id, resource.id, '#f25022');
+        }
+      }
+
+      // Check for server_id reference (SQL Database -> SQL Server)
+      if (config.server_id && typeof config.server_id === 'string') {
+        const serverResource = projectResources.find(
+          r => r.type === 'azurerm_mssql_server'
+        );
+        if (serverResource) {
+          addEdge(serverResource.id, resource.id, '#ffb900');
         }
       }
     });
-    
+
     setEdges(newEdges);
   };
 
@@ -432,7 +456,12 @@ const VisualDesigner = () => {
           </Space>
         </div>
         
-        <Spin spinning={projectLoading} tip="Loading project resources...">
+        <div style={{ position: 'absolute', top: project ? 48 : 0, left: 0, right: 0, bottom: 0 }}>
+          {projectLoading && (
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10 }}>
+              <Spin tip="Loading project resources..." />
+            </div>
+          )}
           <DesignerCanvas
             initialNodes={nodes}
             initialEdges={edges}
@@ -440,7 +469,7 @@ const VisualDesigner = () => {
             onEdgesChange={setEdges}
             onNodeSelect={handleNodeSelect}
           />
-        </Spin>
+        </div>
       </Content>
 
       {/* Configuration Drawer */}

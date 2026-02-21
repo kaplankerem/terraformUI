@@ -4,10 +4,15 @@ import { Card, Tag, Space, Typography } from 'antd';
 import {
   AppstoreOutlined,
   CloudOutlined,
+  CloudServerOutlined,
   DatabaseOutlined,
   GlobalOutlined,
   SafetyOutlined,
   WifiOutlined,
+  CodeOutlined,
+  FundOutlined,
+  BarChartOutlined,
+  ConsoleSqlOutlined,
 } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -30,7 +35,13 @@ const iconMap: Record<string, React.ReactNode> = {
   nsg: <SafetyOutlined />,
   'public-ip': <CloudOutlined />,
   nic: <WifiOutlined />,
-  'virtual-machine': <AppstoreOutlined />,
+  'virtual-machine': <CloudServerOutlined />,
+  'service-plan': <CodeOutlined />,
+  'web-app': <CloudServerOutlined />,
+  'sql-server': <ConsoleSqlOutlined />,
+  'sql-database': <DatabaseOutlined />,
+  'app-insights': <FundOutlined />,
+  'log-analytics': <BarChartOutlined />,
   'default': <AppstoreOutlined />,
 };
 
@@ -41,6 +52,8 @@ const categoryColors: Record<string, string> = {
   storage: '#0078d4',
   compute: '#f25022',
   database: '#ffb900',
+  monitoring: '#68217a',
+  security: '#e81123',
 };
 
 interface ResourceNodeProps {
