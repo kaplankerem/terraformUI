@@ -6,7 +6,7 @@
 
 **Description:** A GUI-driven application for generating Terraform code for Azure cloud infrastructure. Users can design and deploy Azure resources through an intuitive interface without writing code.
 
-**Status:** Phase 1 Complete - Foundation Implemented
+**Status:** Phase 2 Complete - Core Features Implemented
 
 ---
 
@@ -73,13 +73,14 @@ terraformUI/
 - Frontend core (React, Ant Design)
 - First resource implementation (Resource Group)
 
-### Phase 2: Core Features - NEXT
-- Dynamic form engine
-- Resource schema definitions (VM, Storage, VNet, NSG)
-- Terraform generator
-- Code preview and export
+### Phase 2: Core Features ✅ COMPLETE
+- Dynamic form engine with validation
+- Resource schema definitions (VNet, Subnet, Storage, NSG, Public IP, NIC)
+- Terraform generator with variable extraction
+- Code preview with syntax highlighting
+- Project-level code generation
 
-### Phase 3: Enhanced UX
+### Phase 3: Enhanced UX - NEXT
 - Visual resource designer (React Flow canvas)
 - Template system
 - Project management
@@ -163,10 +164,10 @@ terraformUI/
 
 ## Next Steps
 
-1. **Add more Azure resources** - Virtual Network, Storage Account, VM schemas
-2. **Implement visual designer** - React Flow canvas for drag-and-drop
-3. **Template management** - Create and manage infrastructure templates
-4. **Project-level generation** - Handle multiple resources with dependencies
+1. **Implement visual designer** - React Flow canvas for drag-and-drop resource design
+2. **Template management** - Create and manage infrastructure templates
+3. **Add more Azure resources** - VM, Azure SQL, and other compute resources
+4. **Dependency visualization** - Show resource dependencies in the designer
 
 ---
 
@@ -191,13 +192,20 @@ When working on this project, consider:
 
 ## Recent Changes
 
-### 2026-02-21
+### 2026-02-21 (Phase 2)
+- Added 6 new Azure resource schemas: Virtual Network, Subnet, Storage Account, Network Security Group, Public IP, Network Interface
+- Implemented project-level Terraform code generation
+- Enhanced dynamic form engine with better validation
+- Added code preview with syntax highlighting
+- Improved Terraform generator with variable extraction
+
+### 2026-02-21 (Phase 1)
 - Renamed project from "TerraformUI" to "IaNC (Infrastructure as No-Code)"
 - Updated all package names from `@terraformui/*` to `@ianc/*`
 - Updated branding in UI components and documentation
-- Completed Phase 1 implementation
+- Completed Phase 1 foundation implementation
 
 ---
 
 *Last Updated: 2026-02-21*
-*Version: 1.1*
+*Version: 1.2*

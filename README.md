@@ -27,7 +27,7 @@ IaNC (Infrastructure as No-Code) simplifies the process of creating Infrastructu
 
 ## Project Status
 
-🚧 **Phase 1 Complete** - Foundation Implemented
+🚧 **Phase 2 Complete** - Core Features Implemented
 
 See the [plans directory](./plans) for detailed documentation.
 
@@ -81,7 +81,7 @@ terraformUI/
 | Phase | Focus | Status |
 |-------|-------|--------|
 | Phase 1 | Foundation - Project setup, core infrastructure | ✅ Complete |
-| Phase 2 | Core Features - Forms, generation, preview | 🔜 Pending |
+| Phase 2 | Core Features - Forms, generation, preview | ✅ Complete |
 | Phase 3 | Enhanced UX - Visual designer, templates | 🔜 Pending |
 | Phase 4 | Polish - Testing, documentation, advanced features | 🔜 Pending |
 
