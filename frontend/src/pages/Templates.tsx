@@ -78,13 +78,39 @@ const Templates = () => {
 
   const handleUseTemplate = async (template: Template) => {
     try {
-      const response = await axios.post(`/api/v1/templates/${template.id}/instantiate`, {
-        name: `${template.name} - ${new Date().toLocaleDateString()}`,
-      });
-      if (response.data.success) {
-        message.success('Project created from template');
-        // Navigate to the new project
-        window.location.href = `/projects/${response.data.data.id}`;
+      // Check if it's a default template (starts with 'default-')
+      if (template.id.startsWith('default-')) {
+        // Create project directly from the default template resources
+        const response = await axios.post('/api/v1/projects', {
+          name: `${template.name} - ${new Date().toLocaleDateString()}`,
+          description: template.description,
+          environment: 'development',
+        });
+        
+        if (response.data.success) {
+          const projectId = response.data.data.id;
+          
+          // Add resources to the project
+          for (const resource of template.resources) {
+            await axios.post(`/api/v1/projects/${projectId}/resources`, {
+              type: resource.type,
+              name: resource.name,
+              configuration: resource.configuration,
+            });
+          }
+          
+          message.success('Project created from template');
+          window.location.href = `/projects/${projectId}`;
+        }
+      } else {
+        // Use the template instantiate endpoint for database templates
+        const response = await axios.post(`/api/v1/templates/${template.id}/instantiate`, {
+          projectName: `${template.name} - ${new Date().toLocaleDateString()}`,
+        });
+        if (response.data.success) {
+          message.success('Project created from template');
+          window.location.href = `/projects/${response.data.data.id}`;
+        }
       }
     } catch (error) {
       message.error('Failed to create project from template');

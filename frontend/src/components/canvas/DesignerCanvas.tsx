@@ -119,6 +119,56 @@ const DesignerCanvasInner = ({
         y: event.clientY,
       });
 
+      // Generate a unique name for the resource
+      const resourceCount = nodes.length + 1;
+      const resourceName = `${type.replace('azurerm_', '').replace(/_/g, '-')}-${resourceCount}`;
+
+      // Default configurations for each resource type
+      const defaultConfigs: Record<string, Record<string, unknown>> = {
+        'azurerm_resource_group': {
+          name: `rg-${resourceCount}`,
+          location: 'eastus',
+        },
+        'azurerm_virtual_network': {
+          name: `vnet-${resourceCount}`,
+          resource_group_name: '<resource_group_name>',
+          location: 'eastus',
+          address_space: ['10.0.0.0/16'],
+        },
+        'azurerm_subnet': {
+          name: `snet-${resourceCount}`,
+          resource_group_name: '<resource_group_name>',
+          virtual_network_name: '<virtual_network_name>',
+          address_prefixes: ['10.0.1.0/24'],
+        },
+        'azurerm_storage_account': {
+          name: `st${resourceCount}`,
+          resource_group_name: '<resource_group_name>',
+          location: 'eastus',
+          account_tier: 'Standard',
+          account_replication_type: 'LRS',
+        },
+        'azurerm_network_security_group': {
+          name: `nsg-${resourceCount}`,
+          resource_group_name: '<resource_group_name>',
+          location: 'eastus',
+        },
+        'azurerm_public_ip': {
+          name: `pip-${resourceCount}`,
+          resource_group_name: '<resource_group_name>',
+          location: 'eastus',
+          allocation_method: 'Static',
+          sku: 'Standard',
+        },
+        'azurerm_network_interface': {
+          name: `nic-${resourceCount}`,
+          resource_group_name: '<resource_group_name>',
+          location: 'eastus',
+          ip_configuration_name: 'ipconfig',
+          subnet_id: '<subnet_id>',
+        },
+      };
+
       const newNode: Node = {
         id: `${type}-${Date.now()}`,
         type: 'resource',
@@ -128,7 +178,7 @@ const DesignerCanvasInner = ({
           type,
           category,
           icon,
-          configuration: {},
+          configuration: defaultConfigs[type] || { name: resourceName },
         },
       };
 
