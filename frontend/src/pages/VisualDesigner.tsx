@@ -34,15 +34,15 @@ interface Project {
 }
 
 // Resource type to icon/color mapping
-const resourceTypeConfig: Record<string, { color: string; icon: string }> = {
-  'azurerm_resource_group': { color: '#0078d4', icon: '📦' },
-  'azurerm_virtual_network': { color: '#00bcf2', icon: '🌐' },
-  'azurerm_subnet': { color: '#00bcf2', icon: '🔗' },
-  'azurerm_storage_account': { color: '#ffb900', icon: '💾' },
-  'azurerm_windows_virtual_machine': { color: '#f25022', icon: '🖥️' },
-  'azurerm_network_security_group': { color: '#e81123', icon: '🔒' },
-  'azurerm_public_ip': { color: '#00bcf2', icon: '🌍' },
-  'azurerm_network_interface': { color: '#00bcf2', icon: '🔌' },
+const resourceTypeConfig: Record<string, { color: string; icon: string; category: string }> = {
+  'azurerm_resource_group': { color: '#0078d4', icon: 'resource-group', category: 'core' },
+  'azurerm_virtual_network': { color: '#00bcf2', icon: 'virtual-network', category: 'networking' },
+  'azurerm_subnet': { color: '#00bcf2', icon: 'subnet', category: 'networking' },
+  'azurerm_storage_account': { color: '#ffb900', icon: 'storage-account', category: 'storage' },
+  'azurerm_windows_virtual_machine': { color: '#f25022', icon: 'virtual-machine', category: 'compute' },
+  'azurerm_network_security_group': { color: '#e81123', icon: 'nsg', category: 'networking' },
+  'azurerm_public_ip': { color: '#00bcf2', icon: 'public-ip', category: 'networking' },
+  'azurerm_network_interface': { color: '#00bcf2', icon: 'nic', category: 'networking' },
 };
 
 // Default positions for resource nodes
@@ -111,7 +111,7 @@ const VisualDesigner = () => {
         // Convert project resources to nodes
         if (projectData.resources && projectData.resources.length > 0) {
           const projectNodes: Node[] = projectData.resources.map((resource: ProjectResource, index: number) => {
-            const config = resourceTypeConfig[resource.type] || { color: '#666', icon: '📄' };
+            const config = resourceTypeConfig[resource.type] || { color: '#666', icon: 'default', category: 'core' };
             const position = getDefaultNodePosition(index, projectData.resources.length);
             
             return {
@@ -124,6 +124,7 @@ const VisualDesigner = () => {
                 configuration: resource.configuration || {},
                 icon: config.icon,
                 color: config.color,
+                category: config.category,
               },
             };
           });

@@ -30,6 +30,8 @@ const iconMap: Record<string, React.ReactNode> = {
   nsg: <SafetyOutlined />,
   'public-ip': <CloudOutlined />,
   nic: <WifiOutlined />,
+  'virtual-machine': <AppstoreOutlined />,
+  'default': <AppstoreOutlined />,
 };
 
 // Category color mapping
