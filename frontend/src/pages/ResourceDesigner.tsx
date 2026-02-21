@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Row, Col, Card, Typography, Select, Button, Tabs, Spin, message, Input } from 'antd';
 import { PlayCircleOutlined, DownloadOutlined, CopyOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import type { AzureResourceSchema, PropertyDefinition } from '@terraformui/shared';
+import type { AzureResourceSchema, PropertyDefinition } from '@ianc/shared';
 import DynamicForm from '../components/forms/DynamicForm';
 
 const { Title, Paragraph } = Typography;

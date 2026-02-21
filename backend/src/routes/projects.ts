@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../db';
-import type { ApiResponse, CreateProjectRequest, AddResourceRequest } from '@terraformui/shared';
+import type { ApiResponse, CreateProjectRequest, AddResourceRequest } from '@ianc/shared';
 
 export const projectRoutes = Router();
 

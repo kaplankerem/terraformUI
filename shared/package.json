@@ -1,7 +1,7 @@
 {
-  "name": "@terraformui/shared",
+  "name": "@ianc/shared",
   "version": "0.1.0",
-  "description": "Shared types and schemas for TerraformUI",
+  "description": "Shared types and schemas for IaNC (Infrastructure as No-Code)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

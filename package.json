@@ -1,7 +1,7 @@
 {
-  "name": "terraformui",
+  "name": "ianc",
   "version": "0.1.0",
-  "description": "A GUI-driven application for generating Terraform code for Azure cloud infrastructure",
+  "description": "IaNC (Infrastructure as No-Code) - A GUI-driven application for generating Terraform code for Azure cloud infrastructure",
   "private": true,
   "workspaces": [
     "frontend",

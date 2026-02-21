@@ -1,6 +1,6 @@
 import { Form, Input, InputNumber, Select, Switch, Button, Space } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
-import type { PropertyDefinition } from '@terraformui/shared';
+import type { PropertyDefinition } from '@ianc/shared';
 
 interface DynamicFormProps {
   schema: PropertyDefinition[];

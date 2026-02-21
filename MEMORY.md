@@ -1,12 +1,12 @@
-# TerraformUI - Project Memory
+# IaNC (Infrastructure as No-Code) - Project Memory
 
 ## Project Overview
 
-**Project Name:** TerraformUI
+**Project Name:** IaNC (Infrastructure as No-Code)
 
 **Description:** A GUI-driven application for generating Terraform code for Azure cloud infrastructure. Users can design and deploy Azure resources through an intuitive interface without writing code.
 
-**Status:** Planning Phase Complete - Ready for Implementation
+**Status:** Phase 1 Complete - Foundation Implemented
 
 ---
 
@@ -67,13 +67,13 @@ terraformUI/
 
 ## Development Phases
 
-### Phase 1: Foundation
+### Phase 1: Foundation ✅ COMPLETE
 - Project setup and configuration
 - Backend core (Express, Prisma)
 - Frontend core (React, Ant Design)
 - First resource implementation (Resource Group)
 
-### Phase 2: Core Features
+### Phase 2: Core Features - NEXT
 - Dynamic form engine
 - Resource schema definitions (VM, Storage, VNet, NSG)
 - Terraform generator
@@ -152,13 +152,21 @@ terraformUI/
 
 ---
 
+## Package Names
+
+- Root: `ianc`
+- Frontend: `@ianc/frontend`
+- Backend: `@ianc/backend`
+- Shared: `@ianc/shared`
+
+---
+
 ## Next Steps
 
-1. **Initialize project structure** - Create frontend and backend directories
-2. **Set up development environment** - Configure TypeScript, ESLint, Prettier
-3. **Implement first resource** - Resource Group schema and form
-4. **Basic code generation** - Generate simple Terraform for Resource Group
-5. **Expand resources** - Add Virtual Network, Storage Account
+1. **Add more Azure resources** - Virtual Network, Storage Account, VM schemas
+2. **Implement visual designer** - React Flow canvas for drag-and-drop
+3. **Template management** - Create and manage infrastructure templates
+4. **Project-level generation** - Handle multiple resources with dependencies
 
 ---
 
@@ -181,5 +189,15 @@ When working on this project, consider:
 
 ---
 
+## Recent Changes
+
+### 2026-02-21
+- Renamed project from "TerraformUI" to "IaNC (Infrastructure as No-Code)"
+- Updated all package names from `@terraformui/*` to `@ianc/*`
+- Updated branding in UI components and documentation
+- Completed Phase 1 implementation
+
+---
+
 *Last Updated: 2026-02-21*
-*Version: 1.0*
+*Version: 1.1*

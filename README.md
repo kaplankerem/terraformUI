@@ -1,10 +1,10 @@
-# TerraformUI
+# IaNC (Infrastructure as No-Code)
 
 A GUI-Driven Application for Generating Cloud Infrastructure with Terraform Code Automation for Azure
 
 ## Overview
 
-TerraformUI simplifies the process of creating Infrastructure as Code (IaC) by providing an intuitive graphical interface for designing Azure cloud infrastructure. Users can select and configure Azure resources through a web-based GUI, and the application automatically generates valid Terraform code.
+IaNC (Infrastructure as No-Code) simplifies the process of creating Infrastructure as Code (IaC) by providing an intuitive graphical interface for designing Azure cloud infrastructure. Users can select and configure Azure resources through a web-based GUI, and the application automatically generates valid Terraform code.
 
 ## Features
 
@@ -27,7 +27,7 @@ TerraformUI simplifies the process of creating Infrastructure as Code (IaC) by p
 
 ## Project Status
 
-🚧 **Planning Phase Complete** - Ready for Implementation
+🚧 **Phase 1 Complete** - Foundation Implemented
 
 See the [plans directory](./plans) for detailed documentation.
 
@@ -55,10 +55,10 @@ See the [plans directory](./plans) for detailed documentation.
 git clone <repository-url>
 cd terraformUI
 
-# Install dependencies (after project setup)
+# Install dependencies
 npm install
 
-# Start development servers (after project setup)
+# Start development servers
 npm run dev
 ```
 
@@ -80,7 +80,7 @@ terraformUI/
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| Phase 1 | Foundation - Project setup, core infrastructure | 🔜 Pending |
+| Phase 1 | Foundation - Project setup, core infrastructure | ✅ Complete |
 | Phase 2 | Core Features - Forms, generation, preview | 🔜 Pending |
 | Phase 3 | Enhanced UX - Visual designer, templates | 🔜 Pending |
 | Phase 4 | Polish - Testing, documentation, advanced features | 🔜 Pending |

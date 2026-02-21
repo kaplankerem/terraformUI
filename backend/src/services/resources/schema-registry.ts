@@ -1,4 +1,4 @@
-import type { AzureResourceSchema, PropertyDefinition, ValidationRule } from '@terraformui/shared';
+import type { AzureResourceSchema, PropertyDefinition, ValidationRule } from '@ianc/shared';
 import { resourceGroupSchema } from './schemas/resource-group';
 
 class SchemaRegistry {

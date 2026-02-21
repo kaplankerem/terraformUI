@@ -1,7 +1,7 @@
 {
-  "name": "@terraformui/frontend",
+  "name": "@ianc/frontend",
   "version": "0.1.0",
-  "description": "Frontend application for TerraformUI",
+  "description": "Frontend application for IaNC (Infrastructure as No-Code)",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.2",
     "zustand": "^4.4.7",
-    "@terraformui/shared": "*"
+    "@ianc/shared": "*"
   },
   "devDependencies": {
     "@types/react": "^18.2.47",

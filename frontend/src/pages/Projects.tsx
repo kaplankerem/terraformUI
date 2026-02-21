@@ -3,7 +3,7 @@ import { Row, Col, Card, Typography, Button, Empty, Spin, message } from 'antd';
 import { PlusOutlined, FolderOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import type { Project } from '@terraformui/shared';
+import type { Project } from '@ianc/shared';
 
 const { Title, Paragraph } = Typography;
 

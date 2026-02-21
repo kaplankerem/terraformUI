@@ -1,5 +1,5 @@
-import type { AzureResourceSchema } from '@terraformui/shared';
-import { AZURE_REGIONS } from '@terraformui/shared';
+import type { AzureResourceSchema } from '@ianc/shared';
+import { AZURE_REGIONS } from '@ianc/shared';
 
 export const resourceGroupSchema: AzureResourceSchema = {
   type: 'azurerm_resource_group',

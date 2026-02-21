@@ -10,11 +10,11 @@ function AppHeader() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <CloudOutlined style={{ fontSize: '24px', color: '#0078d4' }} />
         <Title level={4} style={{ margin: 0, color: '#0078d4' }}>
-          TerraformUI
+          IaNC
         </Title>
       </div>
       <div style={{ marginLeft: 'auto' }}>
-        <span style={{ color: '#666' }}>Azure Infrastructure Designer</span>
+        <span style={{ color: '#666' }}>Infrastructure as No-Code</span>
       </div>
     </Header>
   );

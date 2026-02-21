@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { schemaRegistry } from '../services/resources/schema-registry';
 import { terraformGenerator } from '../services/generator';
-import type { ApiResponse, ValidateResourceRequest, GenerateResourceRequest } from '@terraformui/shared';
+import type { ApiResponse, ValidateResourceRequest, GenerateResourceRequest } from '@ianc/shared';
 
 export const resourceRoutes = Router();
 

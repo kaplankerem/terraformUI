@@ -1,7 +1,7 @@
 {
-  "name": "@terraformui/backend",
+  "name": "@ianc/backend",
   "version": "0.1.0",
-  "description": "Backend API for TerraformUI",
+  "description": "Backend API for IaNC (Infrastructure as No-Code)",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -22,7 +22,7 @@
     "morgan": "^1.10.0",
     "uuid": "^9.0.1",
     "zod": "^3.22.4",
-    "@terraformui/shared": "*"
+    "@ianc/shared": "*"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
