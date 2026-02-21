@@ -1,18 +1,20 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Background,
   Controls,
   MiniMap,
   addEdge,
-  useNodesState,
-  useEdgesState,
+  applyNodeChanges,
+  applyEdgeChanges,
   Connection,
   Node,
   Edge,
   ReactFlowProvider,
   ReactFlowInstance,
   Panel,
+  NodeChange,
+  EdgeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button, Space, Tooltip, message } from 'antd';
@@ -46,22 +48,41 @@ const DesignerCanvasInner = ({
   onNodeSelect,
 }: DesignerCanvasProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  
+  // Track previous props to detect changes
+  const prevInitialNodesRef = useRef<string>('');
+  const prevInitialEdgesRef = useRef<string>('');
 
   // Sync external initialNodes/initialEdges changes
   useEffect(() => {
-    if (initialNodes.length > 0) {
-      setNodes(initialNodes);
+    const newNodeIds = (initialNodes || []).map(n => n.id).sort().join(',');
+    if (newNodeIds && newNodeIds !== prevInitialNodesRef.current) {
+      console.log('DesignerCanvas: Setting nodes', initialNodes?.length);
+      prevInitialNodesRef.current = newNodeIds;
+      setNodes(initialNodes || []);
     }
-  }, [initialNodes, setNodes]);
+  }, [initialNodes]);
 
   useEffect(() => {
-    if (initialEdges.length > 0) {
-      setEdges(initialEdges);
+    const newEdgeIds = (initialEdges || []).map(e => e.id).sort().join(',');
+    if (newEdgeIds && newEdgeIds !== prevInitialEdgesRef.current) {
+      console.log('DesignerCanvas: Setting edges', initialEdges?.length);
+      prevInitialEdgesRef.current = newEdgeIds;
+      setEdges(initialEdges || []);
     }
-  }, [initialEdges, setEdges]);
+  }, [initialEdges]);
+
+  // Fit view when reactFlowInstance is ready and nodes are loaded
+  useEffect(() => {
+    if (reactFlowInstance && nodes.length > 0) {
+      setTimeout(() => {
+        reactFlowInstance.fitView({ padding: 0.2 });
+      }, 50);
+    }
+  }, [reactFlowInstance, nodes.length]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -89,23 +110,25 @@ const DesignerCanvasInner = ({
   }, [onNodeSelect]);
 
   const onNodesChangeHandler = useCallback(
-    (changes: Parameters<typeof onNodesChangeInternal>[0]) => {
-      onNodesChangeInternal(changes);
+    (changes: NodeChange[]) => {
+      const newNodes = applyNodeChanges(changes, nodes);
+      setNodes(newNodes);
       if (onNodesChange) {
-        onNodesChange(nodes);
+        onNodesChange(newNodes);
       }
     },
-    [nodes, onNodesChange, onNodesChangeInternal]
+    [nodes, onNodesChange]
   );
 
   const onEdgesChangeHandler = useCallback(
-    (changes: Parameters<typeof onEdgesChangeInternal>[0]) => {
-      onEdgesChangeInternal(changes);
+    (changes: EdgeChange[]) => {
+      const newEdges = applyEdgeChanges(changes, edges);
+      setEdges(newEdges);
       if (onEdgesChange) {
-        onEdgesChange(edges);
+        onEdgesChange(newEdges);
       }
     },
-    [edges, onEdgesChange, onEdgesChangeInternal]
+    [edges, onEdgesChange]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {

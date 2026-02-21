@@ -110,9 +110,12 @@ const VisualDesigner = () => {
         
         // Convert project resources to nodes
         if (projectData.resources && projectData.resources.length > 0) {
+          console.log('VisualDesigner: Converting resources to nodes', projectData.resources);
           const projectNodes: Node[] = projectData.resources.map((resource: ProjectResource, index: number) => {
             const config = resourceTypeConfig[resource.type] || { color: '#666', icon: 'default', category: 'core' };
             const position = getDefaultNodePosition(index, projectData.resources.length);
+            
+            console.log('Creating node for resource:', resource.type, resource.name, 'position:', position);
             
             return {
               id: resource.id,
@@ -129,6 +132,7 @@ const VisualDesigner = () => {
             };
           });
           
+          console.log('VisualDesigner: Setting nodes', projectNodes.length);
           setNodes(projectNodes);
           
           // Generate edges based on resource relationships
