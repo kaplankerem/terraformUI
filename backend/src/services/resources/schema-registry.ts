@@ -1,5 +1,11 @@
 import type { AzureResourceSchema, PropertyDefinition, ValidationRule } from '@ianc/shared';
 import { resourceGroupSchema } from './schemas/resource-group';
+import { virtualNetworkSchema } from './schemas/virtual-network';
+import { subnetSchema } from './schemas/subnet';
+import { storageAccountSchema } from './schemas/storage-account';
+import { networkSecurityGroupSchema } from './schemas/network-security-group';
+import { publicIpSchema } from './schemas/public-ip';
+import { networkInterfaceSchema } from './schemas/network-interface';
 
 class SchemaRegistry {
   private schemas: Map<string, AzureResourceSchema> = new Map();
@@ -7,6 +13,12 @@ class SchemaRegistry {
   constructor() {
     // Register built-in schemas
     this.register(resourceGroupSchema);
+    this.register(virtualNetworkSchema);
+    this.register(subnetSchema);
+    this.register(storageAccountSchema);
+    this.register(networkSecurityGroupSchema);
+    this.register(publicIpSchema);
+    this.register(networkInterfaceSchema);
   }
 
   register(schema: AzureResourceSchema): void {
