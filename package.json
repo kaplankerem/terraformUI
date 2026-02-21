@@ -1,0 +1,29 @@
+{
+  "name": "terraformui",
+  "version": "0.1.0",
+  "description": "A GUI-driven application for generating Terraform code for Azure cloud infrastructure",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "lint": "npm run lint --workspaces",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "npm run test --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.2.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "author": "Kerem Kaplan",
+  "license": "MIT"
+}
