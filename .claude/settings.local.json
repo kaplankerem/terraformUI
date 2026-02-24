@@ -12,7 +12,11 @@
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
       "Bash(echo:*)",
-      "Bash(node test-generate.mjs:*)"
+      "Bash(node test-generate.mjs:*)",
+      "Bash(node -e \"console.log\\(process.version\\)\")",
+      "Bash(npm run dev:backend)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx vite)",
+      "Bash(npm run dev:frontend)"
     ]
   }
 }
