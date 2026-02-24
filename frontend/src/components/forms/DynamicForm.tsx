@@ -247,13 +247,11 @@ function DynamicForm({ schema, values, onChange, errors, disabled }: DynamicForm
 
       case 'object':
         // Nested object - render sub-properties
-        const objectValue = (value as Record<string, unknown>) || {};
         return (
           <div key={name} style={{ marginBottom: 16 }}>
             <div style={{ fontWeight: 500, marginBottom: 8 }}>{displayName}</div>
             <div style={{ paddingLeft: 16, borderLeft: '2px solid #f0f0f0' }}>
               {property.subProperties?.map(subProp => {
-                const subValue = objectValue[subProp.name];
                 return (
                   <div key={subProp.name}>
                     {renderField({

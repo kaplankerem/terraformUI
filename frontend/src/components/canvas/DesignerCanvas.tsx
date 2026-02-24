@@ -27,9 +27,17 @@ import {
 } from '@ant-design/icons';
 
 import ResourceNode from './ResourceNode';
+import GroupNode from './GroupNode';
+import {
+  isContainerType,
+  CONTAINER_SIZES,
+  findContainerAtPosition,
+  applyAutoReferences,
+} from './containment-rules';
 
 const nodeTypes = {
   resource: ResourceNode,
+  group: GroupNode,
 };
 
 interface DesignerCanvasProps {
@@ -240,7 +248,6 @@ const DesignerCanvasInner = ({
       const category = event.dataTransfer.getData('category');
       const icon = event.dataTransfer.getData('icon');
 
-      // Check if the dropped element is valid
       if (!type || !reactFlowInstance) {
         return;
       }
@@ -250,18 +257,29 @@ const DesignerCanvasInner = ({
         y: event.clientY,
       });
 
-      // Use functional update to avoid stale closure issues
       setNodes((currentNodes) => {
         const resourceCount = currentNodes.length + 1;
         const resourceName = `${type.replace('azurerm_', '').replace(/_/g, '-')}-${resourceCount}`;
 
         const configFn = defaultConfigs[type];
-        const configuration = configFn ? configFn(resourceCount) : { name: resourceName };
+        let configuration = configFn ? configFn(resourceCount) : { name: resourceName };
+
+        const isGroup = isContainerType(type);
+        const nodeId = `${type}-${Date.now()}`;
+
+        // Check if dropped onto a container node
+        const containerNode = findContainerAtPosition(currentNodes, position, type);
 
         const newNode: Node = {
-          id: `${type}-${Date.now()}`,
-          type: 'resource',
-          position,
+          id: nodeId,
+          type: isGroup ? 'group' : 'resource',
+          position: containerNode
+            ? {
+                // Convert to parent-relative coordinates
+                x: position.x - getAbsoluteNodePosition(containerNode, currentNodes).x,
+                y: position.y - getAbsoluteNodePosition(containerNode, currentNodes).y,
+              }
+            : position,
           data: {
             label: label || type,
             type,
@@ -270,6 +288,34 @@ const DesignerCanvasInner = ({
             configuration,
           },
         };
+
+        // If this is a container, set explicit dimensions
+        if (isGroup) {
+          const size = CONTAINER_SIZES[type] || { width: 400, height: 300 };
+          newNode.style = { width: size.width, height: size.height };
+        }
+
+        // If dropped into a container, set parent-child relationship
+        if (containerNode) {
+          newNode.parentId = containerNode.id;
+          newNode.extent = 'parent';
+          newNode.expandParent = true;
+
+          // Auto-wire Terraform references based on containment
+          configuration = applyAutoReferences(
+            configuration,
+            type,
+            containerNode,
+            currentNodes
+          );
+          newNode.data = { ...newNode.data, configuration };
+
+          // Also inherit location from parent if applicable
+          const parentConfig = (containerNode.data as { configuration?: Record<string, unknown> }).configuration;
+          if (parentConfig?.location && configuration.location !== undefined) {
+            configuration.location = parentConfig.location;
+          }
+        }
 
         const updatedNodes = [...currentNodes, newNode];
 
@@ -282,7 +328,8 @@ const DesignerCanvasInner = ({
         return updatedNodes;
       });
 
-      message.success(`Added ${label || type} to canvas`);
+      const parentMsg = '';
+      message.success(`Added ${label || type} to canvas${parentMsg}`);
     },
     [reactFlowInstance, onNodesChange]
   );
@@ -310,15 +357,41 @@ const DesignerCanvasInner = ({
           return currentEdges;
         }
 
-        const newEdges = currentEdges.filter((edge) => !edge.selected);
+        // Collect IDs of selected nodes and their children (cascade delete)
+        const deletedIds = new Set<string>();
+        const collectChildren = (parentId: string) => {
+          deletedIds.add(parentId);
+          currentNodes.forEach(n => {
+            if (n.parentId === parentId && !deletedIds.has(n.id)) {
+              collectChildren(n.id);
+            }
+          });
+        };
+        selectedNodes.forEach(n => collectChildren(n.id));
+
+        const newEdges = currentEdges.filter(
+          (edge) => !edge.selected && !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
+        );
         if (onEdgesChange) {
           onEdgesChange(newEdges);
         }
-        message.success(`Deleted ${selectedNodes.length} node(s) and ${selectedEdges.length} edge(s)`);
+        message.success(`Deleted ${deletedIds.size} node(s) and ${selectedEdges.length} edge(s)`);
         return newEdges;
       });
 
-      const newNodes = currentNodes.filter((node) => !node.selected);
+      // Remove selected nodes and their children
+      const deletedIds = new Set<string>();
+      const collectChildren = (parentId: string) => {
+        deletedIds.add(parentId);
+        currentNodes.forEach(n => {
+          if (n.parentId === parentId && !deletedIds.has(n.id)) {
+            collectChildren(n.id);
+          }
+        });
+      };
+      currentNodes.filter(n => n.selected).forEach(n => collectChildren(n.id));
+
+      const newNodes = currentNodes.filter((node) => !deletedIds.has(node.id));
       if (onNodesChange) {
         isInternalChange.current = true;
         onNodesChange(newNodes);
@@ -409,6 +482,23 @@ const DesignerCanvasInner = ({
     </div>
   );
 };
+
+// Helper: get absolute position of a node accounting for parent chain
+function getAbsoluteNodePosition(node: Node, allNodes: Node[]): { x: number; y: number } {
+  let x = node.position.x;
+  let y = node.position.y;
+  let current = node;
+
+  while (current.parentId) {
+    const parent = allNodes.find(n => n.id === current.parentId);
+    if (!parent) break;
+    x += parent.position.x;
+    y += parent.position.y;
+    current = parent;
+  }
+
+  return { x, y };
+}
 
 const DesignerCanvas = (props: DesignerCanvasProps) => {
   return (

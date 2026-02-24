@@ -61,3 +61,6 @@ temp/
 *.pem
 *.key
 secrets/
+
+.claude
+.claude/
