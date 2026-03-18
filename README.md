@@ -27,7 +27,7 @@ IaNC (Infrastructure as No-Code) simplifies the process of creating Infrastructu
 
 ## Project Status
 
-✅ **Phase 5 Complete** - Template Loading & Visual Designer Integration
+✅ **Phase 6 In Progress** - Nested Resources & Expansion
 
 See the [plans directory](./plans) for detailed documentation.
 
@@ -85,6 +85,7 @@ terraformUI/
 | Phase 3 | Enhanced UX - Visual designer, templates | ✅ Complete |
 | Phase 4 | Polish - Testing, documentation, advanced features | ✅ Complete |
 | Phase 5 | Template Loading & Visual Designer Integration | ✅ Complete |
+| Phase 6 | Nested Resources & Expansion | 🔄 In Progress |
 
 ## Supported Azure Resources (MVP)
 
@@ -95,6 +96,8 @@ terraformUI/
 - Network Security Group
 - Public IP
 - Network Interface
+- Key Vault
+- Container Registry
 
 ## Contributing
 
@@ -113,4 +116,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-*Last Updated: 2026-02-21*
+*Last Updated: 2026-03-18*

@@ -45,6 +45,9 @@ const iconMap: Record<string, React.ReactNode> = {
   'sql-database': <DatabaseOutlined />,
   'app-insights': <FundOutlined />,
   'log-analytics': <BarChartOutlined />,
+  'windows-vm': <CloudServerOutlined />,
+  'key-vault': <SafetyOutlined />,
+  'container-registry': <CloudOutlined />,
 };
 
 // Category color mapping
@@ -56,6 +59,7 @@ const categoryColors: Record<string, string> = {
   database: '#ffb900',
   monitoring: '#68217a',
   security: '#e81123',
+  container: '#0078d4',
 };
 
 const ResourcePalette = ({ resources, onResourceSelect }: ResourcePaletteProps) => {

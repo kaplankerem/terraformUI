@@ -12,6 +12,9 @@ import { mssqlServerSchema } from './schemas/mssql-server';
 import { mssqlDatabaseSchema } from './schemas/mssql-database';
 import { applicationInsightsSchema } from './schemas/application-insights';
 import { logAnalyticsWorkspaceSchema } from './schemas/log-analytics-workspace';
+import { windowsVirtualMachineSchema } from './schemas/windows-virtual-machine';
+import { keyVaultSchema } from './schemas/key-vault';
+import { containerRegistrySchema } from './schemas/container-registry';
 
 class SchemaRegistry {
   private schemas: Map<string, AzureResourceSchema> = new Map();
@@ -31,6 +34,9 @@ class SchemaRegistry {
     this.register(mssqlDatabaseSchema);
     this.register(applicationInsightsSchema);
     this.register(logAnalyticsWorkspaceSchema);
+    this.register(windowsVirtualMachineSchema);
+    this.register(keyVaultSchema);
+    this.register(containerRegistrySchema);
   }
 
   register(schema: AzureResourceSchema): void {

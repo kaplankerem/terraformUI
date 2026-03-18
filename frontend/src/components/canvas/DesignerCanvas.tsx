@@ -131,6 +131,34 @@ const defaultConfigs: Record<string, (count: number) => Record<string, unknown>>
     sku: 'PerGB2018',
     retention_in_days: 30,
   }),
+  'azurerm_windows_virtual_machine': (c) => ({
+    name: `win-vm-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    size: 'Standard_B2s',
+    admin_username: 'adminuser',
+    admin_password: '<password>',
+    os_disk_caching: 'ReadWrite',
+    os_disk_storage_account_type: 'StandardSSD_LRS',
+    source_image_publisher: 'MicrosoftWindowsServer',
+    source_image_offer: 'WindowsServer',
+    source_image_sku: '2022-Datacenter',
+    source_image_version: 'latest',
+    network_interface_ids: ['<network_interface_id>'],
+  }),
+  'azurerm_key_vault': (c) => ({
+    name: `kv-${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    sku_name: 'standard',
+    tenant_id: '<tenant_id>',
+  }),
+  'azurerm_container_registry': (c) => ({
+    name: `acr${c}`,
+    resource_group_name: '<resource_group_name>',
+    location: 'eastus',
+    sku: 'Standard',
+  }),
 };
 
 const DesignerCanvasInner = ({
@@ -453,6 +481,7 @@ const DesignerCanvasInner = ({
               database: '#ffb900',
               monitoring: '#68217a',
               security: '#e81123',
+              container: '#0078d4',
             };
             return categoryColors[data?.category || ''] || '#666';
           }}

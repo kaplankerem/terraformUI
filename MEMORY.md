@@ -6,7 +6,7 @@
 
 **Description:** A GUI-driven application for generating Terraform code for Azure cloud infrastructure. Users can design and deploy Azure resources through an intuitive interface without writing code.
 
-**Status:** Phase 5 Complete - Template Loading & Visual Designer Integration
+**Status:** Phase 6 In Progress - Nested Resources & Expansion
 
 ---
 
@@ -139,10 +139,12 @@ terraformUI/
 | Category | Resources |
 |----------|-----------|
 | **Core** | Resource Group |
-| **Compute** | Windows Virtual Machine |
+| **Compute** | Windows Virtual Machine (new) |
 | **Storage** | Storage Account |
 | **Networking** | Virtual Network, Subnet, Network Security Group, Public IP, Network Interface |
 | **Database** | Azure SQL Server, SQL Database |
+| **Security** | Key Vault (new) |
+| **Container** | Container Registry (new) |
 
 ---
 
@@ -212,6 +214,14 @@ When working on this project, consider:
 
 ## Recent Changes
 
+### 2026-03-18 (Phase 6 - In Progress)
+- QA validation: All 12 backend tests pass, all builds clean, all API endpoints functional
+- Added 3 new Azure resource schemas: Windows Virtual Machine, Key Vault, Container Registry (16 total)
+- Set up frontend testing infrastructure with Vitest + Testing Library
+- Added initial frontend tests for DynamicForm, ErrorBoundary, Dashboard, Settings
+- Cleaned up duplicate test data in database
+- Updated resource count from 13 to 16
+
 ### 2026-02-21 (Phase 3)
 - Implemented Visual Designer with React Flow canvas
 - Added drag-and-drop resource placement from palette
@@ -235,5 +245,5 @@ When working on this project, consider:
 
 ---
 
-*Last Updated: 2026-02-21*
-*Version: 1.3*
+*Last Updated: 2026-03-18*
+*Version: 1.4*

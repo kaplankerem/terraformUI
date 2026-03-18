@@ -17,6 +17,9 @@ export const CONTAINMENT_RULES: Record<string, string[]> = {
     'azurerm_mssql_server',
     'azurerm_application_insights',
     'azurerm_log_analytics_workspace',
+    'azurerm_windows_virtual_machine',
+    'azurerm_key_vault',
+    'azurerm_container_registry',
   ],
   'azurerm_virtual_network': [
     'azurerm_subnet',
@@ -24,6 +27,7 @@ export const CONTAINMENT_RULES: Record<string, string[]> = {
   'azurerm_subnet': [
     'azurerm_network_interface',
     'azurerm_linux_web_app',
+    'azurerm_windows_virtual_machine',
   ],
   'azurerm_mssql_server': [
     'azurerm_mssql_database',
@@ -122,6 +126,24 @@ export const AUTO_REFERENCE_BINDINGS: Record<string, Record<string, {
     },
   },
   'azurerm_log_analytics_workspace': {
+    'azurerm_resource_group': {
+      configField: 'resource_group_name',
+      referenceProperty: 'name',
+    },
+  },
+  'azurerm_windows_virtual_machine': {
+    'azurerm_resource_group': {
+      configField: 'resource_group_name',
+      referenceProperty: 'name',
+    },
+  },
+  'azurerm_key_vault': {
+    'azurerm_resource_group': {
+      configField: 'resource_group_name',
+      referenceProperty: 'name',
+    },
+  },
+  'azurerm_container_registry': {
     'azurerm_resource_group': {
       configField: 'resource_group_name',
       referenceProperty: 'name',
