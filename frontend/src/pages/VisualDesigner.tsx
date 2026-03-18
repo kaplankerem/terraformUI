@@ -4,7 +4,7 @@ import { Layout, Drawer, Button, Space, message, Typography, Divider, Spin, Brea
 import { SaveOutlined, CodeOutlined, HomeOutlined, FolderOutlined, ShareAltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { Node, Edge } from '@xyflow/react';
-import { DesignerCanvas, ResourcePalette, isContainerType, CONTAINER_SIZES } from '../components/canvas';
+import { DesignerCanvas, ResourcePalette, ResourceTree, isContainerType, CONTAINER_SIZES } from '../components/canvas';
 import DynamicForm from '../components/forms/DynamicForm';
 import { generateMermaid } from '../utils/mermaid-export';
 import type { AzureResourceSchema, PropertyDefinition } from '@ianc/shared';
@@ -51,6 +51,8 @@ const resourceTypeConfig: Record<string, { color: string; icon: string; category
   'azurerm_mssql_database': { color: '#ffb900', icon: 'sql-database', category: 'database' },
   'azurerm_application_insights': { color: '#68217a', icon: 'app-insights', category: 'monitoring' },
   'azurerm_log_analytics_workspace': { color: '#68217a', icon: 'log-analytics', category: 'monitoring' },
+  'azurerm_key_vault': { color: '#e81123', icon: 'key-vault', category: 'security' },
+  'azurerm_container_registry': { color: '#0078d4', icon: 'container-registry', category: 'container' },
 };
 
 const VisualDesigner = () => {
@@ -490,13 +492,29 @@ const VisualDesigner = () => {
 
   return (
     <Layout style={{ height: 'calc(100vh - 64px)' }}>
-      <Sider width={280} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
-        <Spin spinning={loading}>
-          <ResourcePalette
-            resources={resources}
-            onResourceSelect={handleResourceSelect}
-          />
-        </Spin>
+      <Sider width={280} style={{ background: '#fff', borderRight: '1px solid #f0f0f0', overflow: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ flex: '0 0 auto', maxHeight: '50%', overflow: 'auto' }}>
+            <Spin spinning={loading}>
+              <ResourcePalette
+                resources={resources}
+                onResourceSelect={handleResourceSelect}
+              />
+            </Spin>
+          </div>
+          {nodes.length > 0 && (
+            <div style={{ flex: 1, overflow: 'auto', borderTop: '1px solid #f0f0f0' }}>
+              <ResourceTree
+                nodes={nodes}
+                onNodeSelect={(nodeId) => {
+                  const node = nodes.find(n => n.id === nodeId);
+                  if (node) handleNodeSelect(node);
+                }}
+                selectedNodeId={selectedNode?.id}
+              />
+            </div>
+          )}
+        </div>
       </Sider>
 
       <Content style={{ position: 'relative' }}>

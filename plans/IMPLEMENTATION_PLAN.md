@@ -577,20 +577,25 @@ variable "vnet_address_space" {
   - Icon mapping (emojis to proper keys)
   - Template resource configurations with required Azure properties
 
-### Phase 6: Nested Resources Support - Weeks 17-20 🔜 PLANNED
+### Phase 6: Nested Resources & Enhanced Visual Designer ✅ COMPLETED
 
-- [ ] Nested resource support
-  - Subnet as child of Virtual Network
-  - VM extensions
-  - Storage containers
-- [ ] Enhanced visual designer
-  - Collapsible resource groups
-  - Nested node visualization
-  - Parent-child relationships
-- [ ] Improved Terraform generation
-  - Handle nested resource blocks
-  - Dynamic block generation
-  - For_each support
+- [x] Collapsible group nodes
+  - Collapse/expand toggle in group header
+  - Child count badge when collapsed
+  - Recursive descendant hiding
+  - Dimension save/restore
+- [x] Resource hierarchy tree panel
+  - Sidebar tree view of parent-child relationships
+  - Click-to-select integration with canvas
+  - Icon and category color coding
+- [x] Improved Terraform generation
+  - Nested block generation (os_disk, source_image_reference, ip_configuration)
+  - Property grouping for VM resources
+  - Better formatValue with proper indentation
+  - Updated type ordering for new resources
+- [x] Updated containment rules
+  - Key Vault as container type
+  - All new resource types in containment/auto-reference maps
 
 ### Phase 7: Advanced Features - Future
 

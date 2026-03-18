@@ -35,6 +35,9 @@ export const CONTAINMENT_RULES: Record<string, string[]> = {
   'azurerm_service_plan': [
     'azurerm_linux_web_app',
   ],
+  'azurerm_key_vault': [
+    // Key Vault can visually contain access policies (future)
+  ],
 };
 
 // Auto-reference bindings: when a child is dropped into a container,
@@ -166,6 +169,7 @@ export const CONTAINER_SIZES: Record<string, { width: number; height: number }> 
   'azurerm_subnet': { width: 350, height: 250 },
   'azurerm_mssql_server': { width: 380, height: 280 },
   'azurerm_service_plan': { width: 380, height: 280 },
+  'azurerm_key_vault': { width: 380, height: 280 },
 };
 
 // Build a Terraform reference expression: ${azurerm_resource_group.rg-1.name}

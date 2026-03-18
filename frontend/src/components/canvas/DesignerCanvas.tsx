@@ -207,6 +207,105 @@ const DesignerCanvasInner = ({
     }
   }, [reactFlowInstance, nodes.length]);
 
+  // Store original dimensions for collapsed groups so we can restore on expand
+  const collapsedDimensions = useRef<Record<string, { width: number; height: number }>>({});
+
+  // Listen for collapse/expand toggle events from GroupNode
+  useEffect(() => {
+    const handleToggleCollapse = (e: Event) => {
+      const nodeId = (e as CustomEvent).detail.nodeId;
+
+      setNodes((currentNodes) => {
+        const targetNode = currentNodes.find((n) => n.id === nodeId);
+        if (!targetNode) return currentNodes;
+
+        const isCollapsed = !(targetNode.data as { collapsed?: boolean }).collapsed;
+
+        // Recursively find all descendants
+        const getDescendants = (parentId: string): string[] => {
+          const children = currentNodes.filter((n) => n.parentId === parentId);
+          return children.flatMap((c) => [c.id, ...getDescendants(c.id)]);
+        };
+        const descendantIds = new Set(getDescendants(nodeId));
+        const directChildCount = currentNodes.filter((n) => n.parentId === nodeId).length;
+
+        // Store original dimensions before collapsing
+        if (isCollapsed) {
+          const currentStyle = targetNode.style as { width?: number; height?: number } | undefined;
+          const defaultSize = CONTAINER_SIZES[(targetNode.data as { type: string }).type] || { width: 400, height: 300 };
+          collapsedDimensions.current[nodeId] = {
+            width: (currentStyle?.width as number) || defaultSize.width,
+            height: (currentStyle?.height as number) || defaultSize.height,
+          };
+        }
+
+        const updatedNodes = currentNodes.map((n) => {
+          if (n.id === nodeId) {
+            const restoredDims = collapsedDimensions.current[nodeId];
+            return {
+              ...n,
+              data: { ...n.data, collapsed: isCollapsed, childCount: directChildCount },
+              style: isCollapsed
+                ? { ...n.style, height: 46 }
+                : {
+                    ...n.style,
+                    height: restoredDims
+                      ? restoredDims.height
+                      : (CONTAINER_SIZES[(n.data as { type: string }).type] || { height: 300 }).height,
+                  },
+            };
+          }
+          if (descendantIds.has(n.id)) {
+            return { ...n, hidden: isCollapsed };
+          }
+          return n;
+        });
+
+        // Clean up stored dimensions on expand
+        if (!isCollapsed) {
+          delete collapsedDimensions.current[nodeId];
+        }
+
+        if (onNodesChange) {
+          isInternalChange.current = true;
+          onNodesChange(updatedNodes);
+        }
+        return updatedNodes;
+      });
+
+      // Hide/show edges connected to hidden descendants
+      setEdges((currentEdges) => {
+        // We need the latest nodes to compute descendants
+        // Use a ref-like approach: derive from the nodes we just computed
+        let latestNodes: Node[] = [];
+        setNodes((cur) => { latestNodes = cur; return cur; });
+
+        const getDescendants = (parentId: string): string[] => {
+          const children = latestNodes.filter((n) => n.parentId === parentId);
+          return children.flatMap((c) => [c.id, ...getDescendants(c.id)]);
+        };
+        const descendantIds = new Set(getDescendants(nodeId));
+        const targetNode = latestNodes.find((n) => n.id === nodeId);
+        const isNowCollapsed = !!(targetNode?.data as { collapsed?: boolean } | undefined)?.collapsed;
+
+        const newEdges = currentEdges.map((edge) => {
+          if (descendantIds.has(edge.source) || descendantIds.has(edge.target)) {
+            return { ...edge, hidden: isNowCollapsed };
+          }
+          return edge;
+        });
+
+        if (onEdgesChange) {
+          onEdgesChange(newEdges);
+        }
+        return newEdges;
+      });
+    };
+
+    window.addEventListener('toggle-collapse', handleToggleCollapse);
+    return () => window.removeEventListener('toggle-collapse', handleToggleCollapse);
+  }, [onNodesChange, onEdgesChange]);
+
   const onConnect = useCallback(
     (params: Connection) => {
       setEdges((eds) => {

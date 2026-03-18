@@ -387,11 +387,14 @@ projectRoutes.post('/:id/generate', async (req: Request, res: Response) => {
       'azurerm_network_security_group': 3,
       'azurerm_public_ip': 3,
       'azurerm_storage_account': 3,
+      'azurerm_key_vault': 3,
+      'azurerm_container_registry': 3,
       'azurerm_service_plan': 3,
       'azurerm_mssql_server': 3,
       'azurerm_log_analytics_workspace': 3,
       'azurerm_application_insights': 4,
       'azurerm_network_interface': 4,
+      'azurerm_windows_virtual_machine': 5,
       'azurerm_linux_web_app': 5,
       'azurerm_mssql_database': 5,
     };
@@ -429,6 +432,12 @@ projectRoutes.post('/:id/generate', async (req: Request, res: Response) => {
     lines.push('}');
     lines.push('');
 
+    // Generate locals block for resource name references
+    const resourceNames = new Map<string, string>();
+    for (const resource of sortedResources) {
+      resourceNames.set(resource.id, resource.name);
+    }
+
     // Resources with proper references and depends_on
     for (const resource of sortedResources) {
       const config = JSON.parse(resource.configuration);
@@ -436,14 +445,26 @@ projectRoutes.post('/:id/generate', async (req: Request, res: Response) => {
 
       lines.push(`resource "${resource.type}" "${resource.name}" {`);
 
-      for (const [key, value] of Object.entries(config)) {
+      const processedConfig = groupNestedProperties(config, resource.type);
+      for (const [key, value] of Object.entries(processedConfig)) {
         if (value === undefined || value === null) continue;
 
-        // Detect ${type.name.property} reference expressions
-        if (typeof value === 'string' && value.startsWith('${') && value.endsWith('}')) {
-          const ref = value.slice(2, -1); // e.g., "azurerm_resource_group.rg-1.name"
+        if (typeof value === 'object' && !Array.isArray(value)) {
+          // Emit as a nested Terraform block
+          lines.push('');
+          lines.push(`  ${key} {`);
+          for (const [subKey, subValue] of Object.entries(value as Record<string, unknown>)) {
+            if (subValue === undefined || subValue === null) continue;
+            if (typeof subValue === 'string' && subValue.startsWith('${') && subValue.endsWith('}')) {
+              lines.push(`    ${subKey} = ${subValue.slice(2, -1)}`);
+            } else {
+              lines.push(`    ${subKey} = ${formatValue(subValue, 4)}`);
+            }
+          }
+          lines.push('  }');
+        } else if (typeof value === 'string' && value.startsWith('${') && value.endsWith('}')) {
+          const ref = value.slice(2, -1);
           lines.push(`  ${key} = ${ref}`);
-          // Extract resource reference for depends_on
           const parts = ref.split('.');
           if (parts.length >= 2) {
             const depRef = `${parts[0]}.${parts[1]}`;
@@ -537,14 +558,52 @@ projectRoutes.post('/:id/generate', async (req: Request, res: Response) => {
   }
 });
 
+// Group flat properties into nested Terraform blocks
+// e.g. os_disk_caching, os_disk_storage_account_type -> os_disk { caching = ... }
+function groupNestedProperties(config: Record<string, unknown>, resourceType: string): Record<string, unknown> {
+  if (resourceType !== 'azurerm_windows_virtual_machine' && resourceType !== 'azurerm_linux_virtual_machine') {
+    return config;
+  }
+  
+  const result: Record<string, unknown> = {};
+  const osDisk: Record<string, unknown> = {};
+  const sourceImage: Record<string, unknown> = {};
+  const ipConfig: Record<string, unknown> = {};
+  
+  for (const [key, value] of Object.entries(config)) {
+    if (key.startsWith('os_disk_')) {
+      osDisk[key.replace('os_disk_', '')] = value;
+    } else if (key.startsWith('source_image_')) {
+      sourceImage[key.replace('source_image_', '')] = value;
+    } else if (key.startsWith('ip_configuration_')) {
+      ipConfig[key.replace('ip_configuration_', '')] = value;
+    } else {
+      result[key] = value;
+    }
+  }
+  
+  if (Object.keys(osDisk).length > 0) {
+    result['os_disk'] = osDisk;
+  }
+  if (Object.keys(sourceImage).length > 0) {
+    result['source_image_reference'] = sourceImage;
+  }
+  if (Object.keys(ipConfig).length > 0) {
+    result['ip_configuration'] = ipConfig;
+  }
+  
+  return result;
+}
+
 // Helper function to format values
-function formatValue(value: unknown): string {
+function formatValue(value: unknown, indent: number = 2): string {
+  const pad = ' '.repeat(indent);
+  const innerPad = ' '.repeat(indent + 2);
+  
   if (typeof value === 'string') {
-    // Resource reference: ${azurerm_resource_group.main.name}
     if (value.startsWith('${') && value.endsWith('}')) {
       return value.slice(2, -1);
     }
-    // Variable reference: var.my_variable
     if (value.startsWith('var.')) {
       return value;
     }
@@ -557,14 +616,23 @@ function formatValue(value: unknown): string {
     return String(value);
   }
   if (Array.isArray(value)) {
-    const items = value.map(v => formatValue(v));
-    return `[${items.join(', ')}]`;
+    if (value.length === 0) return '[]';
+    // Check if items are simple (strings/numbers) or complex (objects)
+    if (value.every(v => typeof v !== 'object' || v === null)) {
+      const items = value.map(v => formatValue(v, indent));
+      return `[${items.join(', ')}]`;
+    }
+    // Array of objects — each becomes a block
+    return value.map(v => `{\n${Object.entries(v as Record<string, unknown>).map(
+      ([k, val]) => `${innerPad}${k} = ${formatValue(val, indent + 2)}`
+    ).join('\n')}\n${pad}}`).join('\n');
   }
   if (typeof value === 'object' && value !== null) {
-    const entries = Object.entries(value).map(
-      ([k, v]) => `    ${k} = ${formatValue(v)}`
-    );
-    return `{\n${entries.join('\n')}\n  }`;
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) return '{}';
+    return `{\n${entries.map(
+      ([k, v]) => `${innerPad}${k} = ${formatValue(v, indent + 2)}`
+    ).join('\n')}\n${pad}}`;
   }
   return String(value);
 }

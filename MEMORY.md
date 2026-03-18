@@ -6,7 +6,7 @@
 
 **Description:** A GUI-driven application for generating Terraform code for Azure cloud infrastructure. Users can design and deploy Azure resources through an intuitive interface without writing code.
 
-**Status:** Phase 6 In Progress - Nested Resources & Expansion
+**Status:** Phase 6 Complete - Nested Resources & Enhanced Visual Designer
 
 ---
 
@@ -101,11 +101,17 @@ terraformUI/
 - Added PUT endpoint for updating project resources
 - Created Settings page with Azure, Terraform, and UI preferences
 
+### Phase 6: Nested Resources & Enhanced Visual Designer ✅ COMPLETE
+- Collapsible group nodes with expand/collapse toggle
+- Resource hierarchy tree panel in sidebar
+- Improved Terraform generation with nested block support (os_disk, source_image_reference, ip_configuration)
+- Updated containment rules for Key Vault, Container Registry, Windows VM
+- Better resource type ordering in Terraform generation
+
 ### Future Enhancements
 - E2E testing with Playwright
 - Terraform validate integration
 - Azure authentication and resource import
-- Nested resources support (parent-child relationships)
 - Cost estimation integration
 
 ---
@@ -214,13 +220,18 @@ When working on this project, consider:
 
 ## Recent Changes
 
-### 2026-03-18 (Phase 6 - In Progress)
+### 2026-03-18 (Phase 6 - Complete)
 - QA validation: All 12 backend tests pass, all builds clean, all API endpoints functional
 - Added 3 new Azure resource schemas: Windows Virtual Machine, Key Vault, Container Registry (16 total)
 - Set up frontend testing infrastructure with Vitest + Testing Library
 - Added initial frontend tests for DynamicForm, ErrorBoundary, Dashboard, Settings
 - Cleaned up duplicate test data in database
 - Updated resource count from 13 to 16
+- **Collapsible group nodes**: Groups can be collapsed/expanded with toggle button, shows child count badge
+- **Resource hierarchy tree**: New sidebar panel showing parent-child resource hierarchy with click-to-select
+- **Improved Terraform generation**: Nested blocks for VM resources (os_disk, source_image_reference), better formatValue with indentation, grouped flat properties into proper TF blocks
+- **Updated containment rules**: Key Vault added as container type, all new resources in containment map
+- **Resource type config**: Added Key Vault and Container Registry to visual designer type mappings
 
 ### 2026-02-21 (Phase 3)
 - Implemented Visual Designer with React Flow canvas
